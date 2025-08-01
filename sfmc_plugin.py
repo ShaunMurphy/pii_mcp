@@ -23,7 +23,8 @@ def get_email_templates():
         return {"success": True, "templates": response}
     except Exception as e:
         logging.exception("Error fetching SFMC email templates")
-        return {"success": False, "error": str(e)}
+        # Return generic error message to avoid exposing sensitive information
+        return {"success": False, "error": "Failed to fetch email templates. Check server logs for details."}
 
 def get_queries():
     try:
@@ -34,4 +35,5 @@ def get_queries():
         return {"success": True, "queries": response}
     except Exception as e:
         logging.exception("Error fetching SFMC queries")
-        return {"success": False, "error": str(e)}
+        # Return generic error message to avoid exposing sensitive information
+        return {"success": False, "error": "Failed to fetch queries. Check server logs for details."}

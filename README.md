@@ -1,7 +1,43 @@
 # PII Redacting FastMCP Server with Salesforce Marketing Cloud® (SFMC) Integration
 
 ## Overview
+## What is an Agent?
 
+An **agent** in this context is an autonomous client application that connects to the FastMCP server, discovers available tools, and can invoke those tools programmatically. Agents can be used to automate workflows, integrate with LLMs, or serve as bridges between FastMCP and other systems. They handle connectivity, error handling, logging, and can be extended with tracing or monitoring. The provided `agent.py` is a reference implementation that demonstrates how to connect, list, and invoke FastMCP tools, including robust error handling and MLflow tracing.
+
+### Agent Design and Workflow
+
+The agent connects to the FastMCP server, discovers available tools, and invokes them as needed. Below is a Mermaid diagram illustrating the agent's interaction with the FastMCP ecosystem:
+
+```mermaid
+flowchart TD
+    Agent --env config--> FastMCPServer
+    Agent --fetch templates--> FastMCPServer
+    Agent --run queries--> FastMCPServer
+    FastMCPServer --SSE--> Agent
+```
+
+### How to Run the Agent
+
+1. **Start the FastMCP server**  
+   Ensure the FastMCP server is running and accessible at the URL specified in your `.env` file (default: `http://localhost:8000/mcp`).
+
+2. **Install dependencies**  
+   ```
+   pip install -r requirements.txt
+   ```
+
+3. **Set environment variables**  
+   Copy `.env.example` to `.env` and update as needed.
+
+4. **Run the agent**  
+   ```
+   python agent.py
+   ```
+
+The agent will connect to the server, list available tools, and attempt to invoke each tool, logging results and errors.
+
+## What does this MCP do?
 This project is a FastMCP server that provides secure, privacy-first orchestration for Salesforce Marketing Cloud® (SFMC) using the [FuelSDKWrapper](https://github.com/SnapLyte/FuelSDK-Python-Wrapper). All incoming and outgoing data is protected by a Guardrails Middleware that uses Presidio to automatically redact sensitive PII (personally identifiable information).
 
 **Key Features:**

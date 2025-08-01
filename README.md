@@ -44,6 +44,53 @@ The architecture is designed for secure, modular, and privacy-preserving orchest
 
 This modular approach allows you to add new plugins, tools, or middleware layers as needed, while maintaining strict privacy and security controls throughout the stack.
 
+## MLFlow Instrumentation & Tracing
+
+This project uses MLFlow (pinned to version 3.1.4) for experiment tracking, tracing, and observability.
+
+### Installation
+
+Add the following to your requirements:
+```
+mlflow==3.1.4
+```
+Install with:
+```
+pip install -r requirements.txt
+```
+
+### Configuration
+
+Set the MLFlow tracking URI and experiment name in your environment or code:
+```python
+import mlflow
+mlflow.set_tracking_uri("http://localhost:5000")  # or your MLFlow server URI
+mlflow.set_experiment("FastMCP Tracing")
+```
+
+### Usage
+
+- Middleware and plugin tool functions are instrumented to log traces, metrics, and artifacts to MLFlow.
+- Each request and plugin execution is tracked as an MLFlow run.
+- View traces and metrics in the MLFlow UI.
+
+### Validation
+
+1. Start the MCP server and trigger requests/plugins.
+2. Open the MLFlow UI (`mlflow ui`) and verify that runs, metrics, and artifacts appear.
+3. Check logs for successful MLFlow runs.
+
+### Integration Diagram
+
+```mermaid
+flowchart TD
+    A[MCP Server Start] --> B[Initialize MLFlow Experiment]
+    B --> C[Middleware Handles Request]
+    C --> D[MLFlow Logs Request/Response]
+    C --> E[Plugin Tool Executes]
+    E --> F[MLFlow Logs Metrics/Artifacts]
+    D & F --> G[MLFlow UI Shows Traces]
+```
 ---
 
 ## Features

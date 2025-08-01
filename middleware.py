@@ -2,6 +2,46 @@ from fastmcp.server.middleware import Middleware, MiddlewareContext
 from presidio_analyzer import AnalyzerEngine
 from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import RecognizerResult as AnonymizerRecognizerResult
+import os
+import logging
+import requests
+from functools import wraps
+
+ENABLE_MLFLOW = os.getenv("ENABLE_MLFLOW", "false").lower() == "true"
+if ENABLE_MLFLOW:
+    import mlflow
+    from mlflow.tracking import MlflowClient
+
+if ENABLE_MLFLOW:
+    MLFLOW_TRACKING_URI = "http://localhost:5000"
+    print(f"[MLFlow] Attempting to connect to tracking URI: {MLFLOW_TRACKING_URI}")
+    logging.info(f"[MLFlow] Attempting to connect to tracking URI: {MLFLOW_TRACKING_URI}")
+
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+    mlflow.set_experiment("FastMCP Tracing")
+
+    # Patch mlflow's HTTP request to use a 15s timeout
+    def patch_mlflow_timeout():
+        import requests.sessions
+
+        orig_request = requests.sessions.Session.request
+
+        @wraps(orig_request)
+        def request_with_timeout(self, method, url, *args, **kwargs):
+            kwargs.setdefault("timeout", 15)
+            return orig_request(self, method, url, *args, **kwargs)
+
+        requests.sessions.Session.request = request_with_timeout
+
+    patch_mlflow_timeout()
+
+    # Test connection with timeout and log error if unreachable
+    try:
+        MlflowClient().search_experiments()
+    except requests.exceptions.RequestException as e:
+        logging.error(f"[MLFlow] Could not connect to tracking URI {MLFLOW_TRACKING_URI} within 15s: {e}")
+        print(f"[MLFlow] Could not connect to tracking URI {MLFLOW_TRACKING_URI} within 15s: {e}")
+
 
 DEFAULT_ENTITIES = [
     "EMAIL_ADDRESS",
@@ -73,21 +113,43 @@ class GuardrailsMiddleware(Middleware):
         self.anonymizer = AnonymizerEngine()
 
     async def __call__(self, context: MiddlewareContext, call_next):
-        # Redact PII in incoming message (request)
-        if hasattr(context, "message") and isinstance(context.message, dict):
-            params = context.message.get("params")
-            if isinstance(params, dict):
-                redact_dict(params, self.analyzer, self.anonymizer)
+        if ENABLE_MLFLOW:
+            with mlflow.start_run(run_name="GuardrailsMiddleware"):
+                # Log request parameters
+                if hasattr(context, "message") and isinstance(context.message, dict):
+                    params = context.message.get("params")
+                    if isinstance(params, dict):
+                        redact_dict(params, self.analyzer, self.anonymizer)
+                        mlflow.log_param("request_params", str(params))
 
-        # Call the next middleware/handler
-        try:
-            result = await call_next(context)
-        except Exception as e:
-            print(f"[GuardrailsMiddleware] Error calling next middleware/handler: {e}")
-            raise
+                # Call the next middleware/handler
+                try:
+                    result = await call_next(context)
+                except Exception as e:
+                    mlflow.log_param("error", str(e))
+                    print(f"[GuardrailsMiddleware] Error calling next middleware/handler: {e}")
+                    raise
 
-        # Redact PII in outgoing result (response)
-        if isinstance(result, dict):
-            redact_dict(result, self.analyzer, self.anonymizer)
+                # Redact PII in outgoing result (response)
+                if isinstance(result, dict):
+                    redact_dict(result, self.analyzer, self.anonymizer)
+                    mlflow.log_param("response", str(result))
 
-        return result
+                return result
+        else:
+            # MLFlow disabled, original logic
+            if hasattr(context, "message") and isinstance(context.message, dict):
+                params = context.message.get("params")
+                if isinstance(params, dict):
+                    redact_dict(params, self.analyzer, self.anonymizer)
+
+            try:
+                result = await call_next(context)
+            except Exception as e:
+                print(f"[GuardrailsMiddleware] Error calling next middleware/handler: {e}")
+                raise
+
+            if isinstance(result, dict):
+                redact_dict(result, self.analyzer, self.anonymizer)
+
+            return result

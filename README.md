@@ -257,3 +257,22 @@ def test_get_email_templates(monkeypatch):
 - [Presidio](https://microsoft.github.io/presidio/)
 - [FuelSDKWrapper](https://github.com/SnapLyte/FuelSDK-Python-Wrapper)
 - [Salesforce-FuelSDK-Sans](https://pypi.org/project/Salesforce-FuelSDK-Sans/)
+
+## Jupyter/Databricks Notebook
+
+The `agent_notebook.ipynb` notebook demonstrates how to connect to a FastMCP server, list available tools, and invoke them using the agent pattern. It is compatible with both Jupyter and Databricks environments.
+
+**Features:**
+- Shows how to install required dependencies in Databricks.
+- Demonstrates environment variable and secret management for Databricks.
+- Provides example code for connecting to FastMCP, listing tools, and invoking them.
+- Handles tool invocation, error handling, and logging.
+- Can be used as a template for integrating FastMCP agents in other notebooks.
+
+**Validation:**
+To validate the notebook structure, use the following command after installing `nbformat`:
+```sh
+pip install nbformat
+python -c "import nbformat; nbformat.validate(nbformat.read(open('agent_notebook.ipynb'), as_version=4))"
+```
+A warning about missing cell IDs may appear; this does not affect current functionality but can be resolved by normalizing the notebook with nbformat.

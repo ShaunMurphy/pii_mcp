@@ -13,12 +13,13 @@ if ENABLE_MLFLOW:
     from mlflow.tracking import MlflowClient
 
 if ENABLE_MLFLOW:
-    MLFLOW_TRACKING_URI = "http://localhost:5000"
+    MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
+    MLFLOW_EXPERIMENT = os.getenv("MLFLOW_EXPERIMENT", "FastMCP Tracing")
     print(f"[MLFlow] Attempting to connect to tracking URI: {MLFLOW_TRACKING_URI}")
     logging.info(f"[MLFlow] Attempting to connect to tracking URI: {MLFLOW_TRACKING_URI}")
 
     mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-    mlflow.set_experiment("FastMCP Tracing")
+    mlflow.set_experiment(MLFLOW_EXPERIMENT)
 
     # Patch mlflow's HTTP request to use a 15s timeout
     def patch_mlflow_timeout():

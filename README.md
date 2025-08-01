@@ -46,26 +46,11 @@ This modular approach allows you to add new plugins, tools, or middleware layers
 
 ## MLFlow Instrumentation & Tracing
 
-This project uses MLFlow (pinned to version 3.1.4) for experiment tracking, tracing, and observability.
-
-### Installation
-
-Add the following to your requirements:
+This project uses MLFlow (pinned to version 3.1.4) for experiment tracking, tracing, and observability. It is enabled in the .env:
 ```
-mlflow==3.1.4
-```
-Install with:
-```
-pip install -r requirements.txt
-```
-
-### Configuration
-
-Set the MLFlow tracking URI and experiment name in your environment or code:
-```python
-import mlflow
-mlflow.set_tracking_uri("http://localhost:5000")  # or your MLFlow server URI
-mlflow.set_experiment("FastMCP Tracing")
+ENABLE_MLFLOW=true
+MLFLOW_TRACKING_URI=http://localhost:5000
+MLFLOW_EXPERIMENT=FastMCP Tracing
 ```
 
 ### Usage
